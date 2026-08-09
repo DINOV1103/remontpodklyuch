@@ -1929,6 +1929,98 @@ if(is_iframe){iframe_count+=1}}});if(image_count>0||iframe_count>0||rocketlazy_c
   window.addEventListener("load", initTelegramForms);
 })();
 </script>
+
+<script>
+// ==== TELEFON RAQAM MASKASI: +998 doimiy, undan keyin faqat 9 ta raqam ====
+(function(){
+  var PREFIX = "+998";
+  var MAX_DIGITS = 9;
+
+  function onlyDigits(str){
+    return (str || "").replace(/\D/g, "");
+  }
+
+  function formatValue(rawDigits){
+    // rawDigits — foydalanuvchi kiritgan raqamlar (998 dan keyingisi)
+    var digits = rawDigits.slice(0, MAX_DIGITS);
+    return PREFIX + (digits.length ? " " + digits : "");
+  }
+
+  function extractUserDigits(value){
+    // butun qiymatdan barcha raqamlarni olamiz, boshidagi "998" ni olib tashlaymiz
+    var digits = onlyDigits(value);
+    if (digits.indexOf("998") === 0) {
+      digits = digits.slice(3);
+    }
+    return digits.slice(0, MAX_DIGITS);
+  }
+
+  function setCaretToEnd(input){
+    var pos = input.value.length;
+    try { input.setSelectionRange(pos, pos); } catch(e){}
+  }
+
+  function initPhoneLock(input){
+    if (!input || input.dataset.phoneLockInit === "1") return;
+    input.dataset.phoneLockInit = "1";
+
+    // eski maskani o'chirib qo'yamiz, o'zimiznikini ishlatamiz
+    input.removeAttribute("data-mask");
+    input.setAttribute("inputmode", "numeric");
+    input.setAttribute("autocomplete", "tel");
+    input.placeholder = "+998 XXXXXXXXX";
+    input.maxLength = PREFIX.length + 1 + MAX_DIGITS;
+
+    if (!input.value || input.value.trim() === "") {
+      input.value = PREFIX + " ";
+    }
+
+    input.addEventListener("focus", function(){
+      if (!input.value || input.value.trim() === "") {
+        input.value = PREFIX + " ";
+      }
+      setCaretToEnd(input);
+    });
+
+    input.addEventListener("keydown", function(e){
+      var pos = input.selectionStart;
+      var minPos = PREFIX.length + 1; // "+998 " dan oldinga o'tishga ruxsat yo'q
+      if ((e.key === "Backspace" || e.key === "Delete") && pos <= minPos) {
+        e.preventDefault();
+      }
+    });
+
+    input.addEventListener("input", function(){
+      var digits = extractUserDigits(input.value);
+      input.value = formatValue(digits);
+      setCaretToEnd(input);
+    });
+
+    input.addEventListener("click", function(){
+      if (input.selectionStart < PREFIX.length + 1) {
+        setCaretToEnd(input);
+      }
+    });
+
+    input.addEventListener("paste", function(e){
+      e.preventDefault();
+      var pasted = (e.clipboardData || window.clipboardData).getData("text");
+      var digits = extractUserDigits(pasted);
+      input.value = formatValue(digits);
+      setCaretToEnd(input);
+    });
+  }
+
+  function initAllPhoneInputs(){
+    document.querySelectorAll('input[name="mask-477"]').forEach(initPhoneLock);
+  }
+
+  document.addEventListener("DOMContentLoaded", initAllPhoneInputs);
+  window.addEventListener("load", initAllPhoneInputs);
+  // dinamik qo'shilgan formalar uchun (masalan popup) kuzatib turamiz
+  new MutationObserver(initAllPhoneInputs).observe(document.documentElement, {childList:true, subtree:true});
+})();
+</script>
 </body>
 </html>
 
