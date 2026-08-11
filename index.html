@@ -1858,10 +1858,69 @@ if(is_iframe){iframe_count+=1}}});if(image_count>0||iframe_count>0||rocketlazy_c
   var TELEGRAM_CHAT_ID   = "1691140865";
   // =============================================================
 
+  // ==== UTM / MANBA ANIQLASH ====
+  // Ruxsat etilgan manbalar: facebook, telegram, instagram, youtube, tiktok, google
+  var ALLOWED_SOURCES = ["facebook", "telegram", "instagram", "youtube", "tiktok", "google"];
+
+  function normalizeSource(raw){
+    if(!raw) return null;
+    raw = raw.toLowerCase();
+    if(raw.indexOf("fb") !== -1 || raw.indexOf("facebook") !== -1) return "facebook";
+    if(raw.indexOf("tg") !== -1 || raw.indexOf("telegram") !== -1) return "telegram";
+    if(raw.indexOf("ig") !== -1 || raw.indexOf("instagram") !== -1) return "instagram";
+    if(raw.indexOf("yt") !== -1 || raw.indexOf("youtube") !== -1) return "youtube";
+    if(raw.indexOf("tiktok") !== -1 || raw.indexOf("tt") !== -1) return "tiktok";
+    if(raw.indexOf("google") !== -1 || raw.indexOf("gads") !== -1 || raw.indexOf("adwords") !== -1) return "google";
+    return raw;
+  }
+
+  function detectSourceFromReferrer(){
+    var ref = document.referrer.toLowerCase();
+    if(!ref) return null;
+    if(ref.indexOf("facebook.com") !== -1 || ref.indexOf("fb.com") !== -1) return "facebook";
+    if(ref.indexOf("t.me") !== -1 || ref.indexOf("telegram.org") !== -1) return "telegram";
+    if(ref.indexOf("instagram.com") !== -1) return "instagram";
+    if(ref.indexOf("youtube.com") !== -1 || ref.indexOf("youtu.be") !== -1) return "youtube";
+    if(ref.indexOf("tiktok.com") !== -1) return "tiktok";
+    if(ref.indexOf("google.") !== -1) return "google";
+    return null;
+  }
+
+  function captureUTM(){
+    try{
+      var params = new URLSearchParams(window.location.search);
+      var utmSource = params.get("utm_source");
+      var utmMedium = params.get("utm_medium") || "";
+      var utmCampaign = params.get("utm_campaign") || "";
+
+      var source = normalizeSource(utmSource) || detectSourceFromReferrer();
+
+      // Manba topilsa (URL'da UTM bo'lsa) — har doim yangilaymiz (eng oxirgi reklama manbasi ustunlik qiladi)
+      if(source && utmSource){
+        localStorage.setItem("lead_source", source);
+        localStorage.setItem("lead_medium", utmMedium);
+        localStorage.setItem("lead_campaign", utmCampaign);
+      // Referrer orqali topilsa va hali hech narsa saqlanmagan bo'lsa — birinchi tashrif manbasi sifatida saqlaymiz
+      } else if(source && !localStorage.getItem("lead_source")){
+        localStorage.setItem("lead_source", source);
+      }
+    }catch(err){}
+  }
+
+  function getLeadSource(){
+    var s = null;
+    try{ s = localStorage.getItem("lead_source"); }catch(err){}
+    return s || "aniqlanmadi (to'g'ridan-to'g'ri kirish)";
+  }
+
+  captureUTM();
+
   function sendToTelegram(name, phone, formLabel){
+    var source = getLeadSource();
     var text = "🆕 Yangi lead!%0A%0A👤 Ism: " + encodeURIComponent(name) +
                "%0A📞 Telefon: " + encodeURIComponent(phone) +
                "%0A📍 Forma: " + encodeURIComponent(formLabel) +
+               "%0A📣 Manba: " + encodeURIComponent(source) +
                "%0A🕒 Vaqt: " + encodeURIComponent(new Date().toLocaleString("uz-UZ", {timeZone:"Asia/Tashkent"}));
 
     var url = "https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN +
