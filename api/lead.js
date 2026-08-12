@@ -13,7 +13,12 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const ALLOWED_SOURCES = ["facebook", "telegram", "instagram", "youtube", "tiktok", "google"];
 
 function isValidPhone(phone) {
-  return /^\+998\d{9}$/.test(phone);
+  const cleaned = phone.replace(/[\s\-()]/g, "");
+  return /^\+998\d{9}$/.test(cleaned);
+}
+
+function cleanPhone(phone) {
+  return phone.replace(/[\s\-()]/g, "");
 }
 
 function sanitize(str, maxLen) {
@@ -71,7 +76,7 @@ module.exports = async function handler(req, res) {
   try {
     const body = req.body || {};
     const name = sanitize(body.name, 100);
-    const phone = sanitize(body.phone, 20);
+    const phone = cleanPhone(sanitize(body.phone, 20));
     const formLabel = sanitize(body.formLabel, 150) || "Noma'lum forma";
     let source = sanitize(body.source, 30).toLowerCase();
     const campaign = sanitize(body.campaign, 100);
@@ -94,3 +99,4 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ ok: false, error: "Server xatosi, keyinroq urinib ko'ring" });
   }
 };
+
